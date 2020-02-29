@@ -1,6 +1,7 @@
 package life.majiang.community.Controller;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 
 import life.majiang.community.mapper.UserMapper;
@@ -37,7 +38,7 @@ public class AuthorizeConteoller {
     @GetMapping("/callback")
     public String callback(@RequestParam(name="code") String code,
                            @RequestParam(name="state") String state,
-                           HttpServletRequest request) {
+                           HttpServletResponse response) {
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         accessTokenDTO.setClient_id(clientId);
         accessTokenDTO.setClient_secret(clientSecret);
@@ -48,14 +49,16 @@ public class AuthorizeConteoller {
         GithubUser githubUser = githubProvider.getUser(accessToken);
         if(githubUser != null){
             //登录成功, 写 cookie 和 session
-            request.getSession().setAttribute("user", githubUser);
+            //request.getSession().setAttribute("user", githubUser); session让数据库代替掉了
             User user = new User();
-            user.setToken(UUID.randomUUID().toString());
+            String token = UUID.randomUUID().toString();
+            user.setToken(token);
             user.setName(githubUser.getName());
             user.setAccountId(String.valueOf( githubUser.getId()));
             user.setGmtCreate(System.currentTimeMillis());
             user.setGmtModified(user.getGmtCreate());
-            userMapper.insert(user);
+            userMapper.insert(user);//用数据库的存储代替了session
+            response.addCookie(new Cookie("token", token));//将token写入页面的cookie
             return "redirect:/";
         }else{
             //登录失败,重新登录
