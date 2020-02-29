@@ -26,6 +26,10 @@ public class GithubProvider {
         try (Response response = client.newCall(request).execute()){
             String string = response.body().string();
             String token = string.split("&")[0].split("=")[1];
+            System.out.println(token);
+            GithubUser githubUser = new GithubUser();
+            System.out.println(githubUser.getName());
+            System.out.println(githubUser.getId());
             return token;
         } catch (Exception e) {
             e.printStackTrace();
